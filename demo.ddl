@@ -2,102 +2,117 @@
   "archive": {
     "enable_reconstruct": true,
     "files": {
-        "input_0.png"         : "Input image",
-        "src-bitmap.png"      : "Input scaled",
-        "result.png"          : "Output image",
-        "stdout.txt"          : "Output text file"
+        "output.png"         : "Relief map",
+        "outputSEG.png"          : "deep prediction",
+        "outputSEGTRESH.off"       : "segmentation",
+        "input_0.off": "Input file"
     },
-    "param": [
-        "zoomfactor"
-    ],
     "info": {
             "run_time": "run time"
         }
   },
   "build": {
     "build1": {
-      "url": "http://ker.iutsd.univ-lorraine.fr/HqxSrc.tar.gz",
-      "construct": "cd HqxSrc; ./configure; make",
-      "move": "HqxSrc/src/.libs/hqx, HqxSrc/src/.libs/libhqx.so.1"
+      "url": "http://www.ipol.im/pub/art/2022/369/TLDDC.tar.gz",
+      "construct": "echo -----------;hostname;echo -----------;cd TLDDC;cd ext; cd DGtal;mkdir build; cd build; echo DGTAL CONSTRUCT;cmake .. -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF; make -j4;cd ../../..; mkdir build;cd build;echo OUR CONSTRUCT;cmake .. -DDGtal_DIR=\"/home/ipol/ipolDevel/ipol_demo/modules/demorunner/binaries/369/src/TLDDC/ext/DGtal/build/\" -DCMAKE_BUILD_TYPE:string=\"Release\";make -j4", 
+      "move": "TLDDC/Demo/deep-segmentation.sh,TLDDC/Demo/predict.py,TLDDC/Demo/model.py,TLDDC/build/segunroll,TLDDC/build/offToObj,TLDDC/build/segToMesh",
+       "virtualenv": "TLDDC/requirements.txt"
     }
   },
+    "params": [
+        {
+            "id": "pred_th",
+            "label": "--threshold",
+            "comments": "Segmentation model output's a grayscale image, you can specify treshold to make segmentation map (default = 127)",
+            "type": "range",
+            "values": {
+                "min": 0, "max":255, "step":1, "default":127
+            }
+        },
+        {
+            "id": "gray_pad",
+            "label": "--intensity_per_cm",
+            "comments": "Relief map is based on Delta distance, you can specify the number of intensity to represent 1cm (default=10)",
+            "type": "range",
+            "values":{
+                "min": 1, "max":50, "step":1, "default":10
+            }
+        },
+        {
+            "id": "gray_or",
+            "label": "--minRV",
+            "comments": "Relief map is based on Delta distance, you can specify minimal delta distance to be represent",
+            "type": "range",
+            "values":{
+                "min": -50, "max":50, "step":1, "default":-5
+            }
+        },
+        {
+            "id": "maxDecrease",
+            "label": "--MaxdF",
+            "comments": "deep resolution to reach empty cells",
+            "type": "range",
+            "values":{
+                "min": 0, "max":5, "step":1, "default":4
+            }
+        },
+        {
+            "id": "padAngle",
+            "label": "--pad",
+            "comments": "angle discretisation to compute partial circumference",
+            "type": "range",
+            "values":{
+                "min": 10, "max":500, "step":10, "default":200
+            }
+        }
+    ],
   "general": {
-    "description": "Tree Defect Segmentation usingGeometric Features and CNN", 
-    "requirements":"DEBIAN_STABLE",
-    "demo_title": "Tree Defect Segmentation usingGeometric Features and CNN <BR> (submitted to ICPR 2020)",
-    "input_description": [
-      "Click on an image or upload one to use it as the algorithm input."
-    ],
-    "param_description": [
-      "You can choose the zoom parameter and run the algorithm."
-    ],
-    "xlink_article": "https://www.ipol.im/",
-    "timeout": 600
+    "requirements":"core",
+    "description": "", 
+    "demo_title": "CNN-based Method for Segmenting Tree Bark Surface Singularites",
+    "xlink_article": "http://www.ipol.im/pub/art/2022/369/",
+    "timeout": 1600
   },
-  "inputs": [
-    {
-            "description": "Input image (png, jpeg, (no gif nor ppm))",
+  "inputs": [{
+            "description": "input",
             "required": true,
-            "max_pixels": 100000000,
             "dtype": "x",
-            "ext": ".png",
-            "type": "image",
+            "ext": ".off",
+            "type": "data",
+            "max_pixels": "7000*7000", 
             "max_weight": "50*1024*1024"
-    }
-  ],
-
-"params": [
-    {
-          "id": "zoomfactor",
-          "label": "Choose the zoom factor",
-          "type": "range",
-          "visible": true,
-          "comments": "Set the resulting zoom factor.",
-          "values": {
-                "default": 4,
-                "max": 4,
-                "min": 2,
-                "step": 2
-          }
-      }
-  ],
-  
+    }],
   "results": [
+    {
+        "contents":"'<br>Relief map resulting from discretisation and result of segmentation by our model :<br>' ", 
+        "type": "html_text"
+    },
     {
             "type": "gallery",
             "contents":
             {
-                "Input basic scale" : {
-                    "img": "src-bitmap.png"
+                "output relief map": {
+                    "img": "output.png"
                 },
-                "output Zoomed image": {
-                    "img": "result.png"
+                "model prediction": {
+                    "img": "outputSEG.png"
                 },
-                "input_src": {
-                    "img": "input_0.png"
+                "prediction segmentation (t=0.5)": {
+                    "img": "outputSEGTRESH.png"
                 }
             }
     },
     {
-        "type": "file_download",
-        "label": "<h3> You can download resulting file here:</h3>",
-        "contents" : {
-            "Resulting zoomed image (png)": "result.png"
-        }
-    },
-     {
-        "type": "file_download",
-        "label": "<h3> You also get the source files here:</h3>",
-        "contents" : {
-            "Input image (png)": "input_0.png",
-            "Rescaled image (by convert rescale option)": "src-bitmap.png"
-        }
+        "contents":"'<br>Defect segmentation on mesh :<br>' ", 
+        "type": "html_text"
     },
     {
-            "contents": "stdout.txt", 
-            "label": "Output", 
-            "type": "text_file"
+            "type": "html_text",
+            "contents": "info.url"
     }
-  ],
-  "run":  "${demoextras}/DemoExtras/run.sh  ${demoextras}  input_0.png $zoomfactor result.png"
+    
+    ],    
+  
+  
+  "run":  "deep-segmentation.sh  ${virtualenv} ${demoextras}/demoExtras/leakyReLu.hdf5 input_0.off $pred_th $gray_pad $gray_or $maxDecrease $padAngle"
 }
